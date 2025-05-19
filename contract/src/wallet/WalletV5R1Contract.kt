@@ -99,6 +99,33 @@ public class WalletV5R1Contract(
         transfer: WalletTransfer
     ): Unit = transfer(privateKey, getWalletDataOrNull(walletId), transfer)
 
+    public fun transferMsg(
+        privateKey: PrivateKeyEd25519,
+        walletId: WalletId,
+        seqno: Int,
+        transfer: WalletTransfer
+    ): BagOfCells {
+        val walletData = Data(
+            seqno,
+            privateKey.publicKey(),
+            walletId
+        )
+
+        val stateInit = if (walletData.seqno == 0) stateInit(walletData).load() else null
+
+        val message = transferMessage(
+            address = address,
+            stateInit = stateInit,
+            privateKey = privateKey,
+            validUntil = Int.MAX_VALUE,
+            seqno = seqno,
+            walletId = walletId,
+            transfer
+        )
+
+        return BagOfCells(CellRef(message, Message.tlbCodec(AnyTlbConstructor)).cell)
+    }
+
     public data class Data(
         val seqno: Int,
         val publicKey: PublicKeyEd25519,
